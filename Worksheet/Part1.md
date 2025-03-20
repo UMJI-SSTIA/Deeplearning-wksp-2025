@@ -1,4 +1,4 @@
-# Deep Learning Workshop 2025 Part A
+# Deep Learning Workshop 2025 Part 1
 
 ## 0. 前言 Foreword
 
