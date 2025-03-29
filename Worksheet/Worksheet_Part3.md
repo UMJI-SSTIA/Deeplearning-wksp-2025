@@ -16,9 +16,9 @@
 
 虽然RNN有很好的预测效果，但是它的计算非常昂贵，因为隐藏状态的设置导致它没有办法并行运算。这样的局限促进了我们今天的主角--**transformer**的产生。
 
-## **Transformer 处理 "I arrived at the" → "Je suis arrivé à" 的全过程**
+## **Transformer 处理 "I arrived at the" → "Je suis arrivé" 的全过程**
 
-Transformer 模型用于神经机器翻译（NMT），其核心流程包括 **词嵌入（Embeddings）**、**位置编码（Positional Encoding）**、**多头自注意力（Multi-head Self-Attention）**、**前馈网络（Feed-Forward Network）**，以及 **解码（Decoding）**。下面我们逐步解析 "I arrived at the" → "Je suis arrivé à" 是如何通过 Transformer 翻译的。
+Transformer 模型用于神经机器翻译（NMT），其核心流程包括 **词嵌入（Embeddings）**、**位置编码（Positional Encoding）**、**多头自注意力（Multi-head Self-Attention）**、**前馈网络（Feed-Forward Network）**，以及 **解码（Decoding）**。下面我们逐步解析 "I arrived at the" → "Je suis arrivé" 是如何通过 Transformer 翻译的。
 
 ---
 
