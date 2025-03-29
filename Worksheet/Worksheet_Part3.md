@@ -323,8 +323,8 @@ $$ \mathrm{softmax}\left(\frac{\mathbf Q \mathbf K^\top }{\sqrt{d}}\right) \math
 然后将不同的行为作为知识组合起来，
 捕获序列内各种范围的依赖关系
 （例如，短距离依赖和长距离依赖关系）。
-因此，允许注意力机制组合使用查询、键和值的不同
-*子空间表示*（representation subspaces）可能是有益的。
+
+![ironman](../img/ironman.png)
 
 为此，与其只使用单独一个注意力汇聚，
 我们可以用独立学习得到的 $h$ 组不同的
