@@ -1,139 +1,76 @@
-# Transformer
-
-## 背景
-
-### RNN的局限
-
-![RNN结构](../img/RNN.png)
-
-上图是最基础的RNN的结构示意图。RNN（循环神经网络）包含两个重要的概念：时间步，隐藏状态。
-
-时间步：比如，在文本处理任务中，每个时间步可能是一个单词或字符。
-
-隐藏状态：它的作用就像是网络的“记忆”，它允许网络通过多个时间步学习数据中的时序关系。
-
-第 $t$ 个时间步的输出 $y_t$ 既与当前时间步的输入  $x_t$ 有关，又与上一时间步的隐藏状态 $h_{t-1}$ 有关。
-
-虽然RNN有很好的预测效果，但是它的计算非常昂贵，因为隐藏状态的设置导致它没有办法并行运算。这样的局限促进了我们今天的主角--**transformer**的产生。
-
-## **Transformer 处理 "I arrived at the" → "Je suis arrivé à" 的全过程**
-
-Transformer 模型用于神经机器翻译（NMT），其核心流程包括 **词嵌入（Embeddings）**、**位置编码（Positional Encoding）**、**多头自注意力（Multi-head Self-Attention）**、**前馈网络（Feed-Forward Network）**，以及 **解码（Decoding）**。下面我们逐步解析 "I arrived at the" → "Je suis arrivé à" 是如何通过 Transformer 翻译的。
-
----
-
-## **1. 输入处理**
-### **(1) Tokenization（分词）**
-首先，Transformer 需要将句子拆分成**子词单元（subwords）**，通常使用 **Byte Pair Encoding (BPE)** 或 **WordPiece**。
-```plaintext
-Input: "I arrived at the"
-Tokenized: ["I", "arrived", "at", "the"]
-```
-法语的输出：
-```plaintext
-Target: "Je suis arrivé"
-Tokenized: ["Je", "suis", "arrivé"]
-```
-
----
-
-### **(2) 词嵌入（Word Embeddings）**
-Transformer 不能直接处理文本，因此每个 token 需要转换成高维向量表示：
-```plaintext
-Embeddings(I)      → [0.1, 0.5, 0.8, ...]
-Embeddings(arrived) → [0.3, 0.7, 0.2, ...]
-Embeddings(at)      → [0.6, 0.1, 0.9, ...]
-Embeddings(the)     → [0.2, 0.4, 0.7, ...]
-```
-
----
-
-### **(3) 位置编码（Positional Encoding）**
-由于 Transformer 没有循环结构（不像 RNN 依赖时间步），它通过**正弦 & 余弦函数**添加位置信息：
-```plaintext
-PositionalEncoding(0) = [0.0000, 0.8415, ...]  # 对应 "I"
-PositionalEncoding(1) = [0.0001, 0.9093, ...]  # 对应 "arrived"
-PositionalEncoding(2) = [0.0002, 0.1411, ...]  # 对应 "at"
-PositionalEncoding(3) = [0.0003, 0.7568, ...]  # 对应 "the"
-```
-然后，将它们加到 Embeddings 上，提供单词的位置信息。
-
----
-
-## **2. 编码阶段（Encoder）**
-Transformer 通过**多个注意力层**处理输入信息，每层主要包括：
-- **多头自注意力（Multi-head Self-Attention）**
-- **前馈神经网络（Feed-Forward Network）**
-- **残差连接 & Layer Normalization**
-
----
-
-### **(4) 多头自注意力（Self-Attention）**
-**目标：让每个词关注整个句子的所有词（包括自身），以获取上下文信息。**
-
-比如处理I在这个句子当中的作用，多头意味着每个头有不同的侧重，包括语法结构，语意信息等。
-
----
-
-### **(5) 前馈神经网络（Feed-Forward Network）**
-这是transformer引入非线性因素的关键，在这个子层中设置有激活函数（如relu）。
-
----
-
-## **3. 解码阶段（Decoder）**
-Decoder 结构与 Encoder 类似，但多了一层**交叉注意力（Cross-Attention）**，用于接收 Encoder 计算出的隐藏状态。这里的隐藏状态只关注了源语言内部的关系。
-
----
-
-### **(6) 自注意力（Masked Self-Attention）**
-Decoder 也使用自注意力，因为在翻译的过程中我们需要保持该句子的语法正确。这一要求意味着我们需要考虑目标语言的内部关系。
-
----
-
-### **(7) 交叉注意力（Cross-Attention）**
-Decoder 需要结合 Encoder 的信息来生成翻译：
-- 让解码器关注源句子 `"I arrived at the"`，提取必要的信息：
-  - 识别 `"arrived"` 应对应 `“arrivé”`。
-  - 识别 `"I"` 应对应 `"je"`。
-  - 注意性别和语法，使 `"arrivé"` 变为正确的 `“je suis arrivé”`。
-
----
-
-## **4. 生成翻译**
-Transformer 最后通过一个 **Softmax 层** 输出概率最高的法语单词：
-```plaintext
-P(Je | I) = 0.92
-P(suis | arrived) = 0.87
-P(arrivé | at) = 0.95
-```
-最终生成的法语翻译：
-```plaintext
-"Je suis arrivé"
-```
-
----
-
-<img src="https://www.tensorflow.org/images/tutorials/transformer/apply_the_transformer_to_machine_translation.gif" alt="Applying the Transformer to machine translation">
-
 # 注意力机制
+注意力是如何应用于视觉世界中的呢？
+这要从当今十分普及的*双组件*（two-component）的框架开始讲起：
+这个框架的出现可以追溯到19世纪90年代的威廉·詹姆斯，
+他被认为是“美国心理学之父” 。
+在这个框架中，受试者基于*非自主性提示*和*自主性提示*
+有选择地引导注意力的焦点。
+
+非自主性提示是基于环境中物体的突出性和易见性。
+想象一下，假如我们面前有五个物品：
+一份报纸、一篇研究论文、一杯咖啡、一本笔记本和一本书，
+就像下图中。
+所有纸制品都是黑白印刷的，但咖啡杯是红色的。
+换句话说，这个咖啡杯在这种视觉环境中是突出和显眼的，
+不由自主地引起人们的注意。
+所以我们会把视力最敏锐的地方放到咖啡上，
+如图所示。
+
+![由于突出性的非自主性提示（红杯子），注意力不自主地指向了咖啡杯](../img/eye-coffee.svg)
+
+喝咖啡后，我们会变得兴奋并想读书，
+所以转过头，重新聚焦眼睛，然后看看书，
+就像图中描述那样。
+与前图中由于突出性导致的选择不同，
+此时选择书是受到了认知和意识的控制，
+因此注意力在基于自主性提示去辅助选择时将更为谨慎。
+受试者的主观意愿推动，选择的力量也就更强大。
+
+![依赖于任务的意志提示（想读一本书），注意力被自主引导到书上](../img/eye-book.svg)
 
 ## 查询、键和值
 
-首先我将以搜索引擎为例来介绍一下这三个概念。
+自主性的与非自主性的注意力提示解释了人类的注意力的方式，
+下面来看看如何通过这两种注意力提示，
+用神经网络来设计注意力机制的框架，
 
-**查询**： 查询是用户在搜索引擎中输入的内容，通常是一个关键字或短语，表示用户想要查找的信息。
+首先，考虑一个相对简单的状况，
+即只使用非自主性提示。
+要想将选择偏向于感官输入，
+则可以简单地使用参数化的全连接层，
+甚至是非参数化的最大汇聚层或平均汇聚层。
 
-**键**： 键通常是指一个文档或网页的标识符（如网页的URL）、关键词。
-
-**值**： 值是与键相关联的数据，是实际的查询结果。
+因此，“是否包含自主性提示”将注意力机制与全连接层或汇聚层区别开来。
+在注意力机制的背景下，自主性提示被称为*查询*（query）。
+给定任何查询，注意力机制通过*注意力汇聚*（attention pooling）
+将选择引导至*感官输入*（sensory inputs，例如中间特征表示）。
+在注意力机制中，这些感官输入被称为*值*（value）。
+更通俗的解释，每个值都与一个*键*（key）配对，
+这可以想象为感官输入的非自主提示。
+如图所示，可以通过设计注意力汇聚的方式，
+便于给定的查询（自主性提示）与键（非自主性提示）进行匹配，
+这将引导得出最匹配的值（感官输入）。
 
 ![注意力机制通过注意力汇聚将*查询*（自主性提示）和*键*（非自主性提示）结合在一起，实现对*值*（感官输入）的选择倾向](../img/qkv.svg)
 
-比如你在搜索引擎中寻找深度学习相关的内容，它首先在一系列键中（不管是否和深度学习有关）寻找，最后通过你的查询和键的相互作用，返回一个相关性比较强的值（通常包括关键词深度学习，比如《动手学深度学习》）。
+鉴于上面所提框架在图中的主导地位，
+因此这个框架下的模型将成为本章的中心。
+然而，注意力机制的设计有许多替代方案。
+例如可以设计一个不可微的注意力模型，
+该模型可以使用强化学习方法进行训练。
 
-![动手学深度学习](../img/动手学深度学习.png)
+## 注意力的可视化
 
-# 注意力汇聚：查询和键的相互租用
+为了可视化注意力权重，需要定义一个`show_heatmaps`函数。
+其输入`matrices`的形状是
+（要显示的行数，要显示的列数，查询的数目，键的数目）。
+
+下面使用一个简单的例子进行演示。
+在本例子中，仅当查询和键相同时，注意力权重为1，否则为0。
+
+![heatmap](../img/output_attention-cues_054b1a_33_1.svg)
+
+# 注意力汇聚：Nadaraya-Watson 核回归
 
 ## 平均汇聚
 
@@ -143,6 +80,21 @@ P(arrivé | at) = 0.95
 $$f(x) = \frac{1}{n}\sum_{i=1}^n y_i,$$
 
 ## [**非参数注意力汇聚**]
+
+显然，平均汇聚忽略了输入 $x_i$ 。
+于是Nadaraya和
+Watson提出了一个更好的想法，
+根据输入的位置对输出 $y_i$ 进行加权：
+
+$$f(x) = \sum_{i=1}^n \frac{K(x - x_i)}{\sum_{j=1}^n K(x - x_j)} y_i,$$
+
+其中 $K$ 是*核*（kernel）。
+该公式所描述的估计器被称为
+*Nadaraya-Watson核回归*。
+这里不会深入讨论核函数的细节，
+但受此启发，
+我们可以从注意力机制框架的角度
+重写一个更加通用的*注意力汇聚*（attention pooling）公式：
 
 $$f(x) = \sum_{i=1}^n \alpha(x, x_i) y_i,$$
 
@@ -156,7 +108,11 @@ $$f(x) = \sum_{i=1}^n \alpha(x, x_i) y_i,$$
 它们是非负的，并且总和为1。
 
 为了更好地理解注意力汇聚，
-下面考虑一个具体的函数，其定义为：
+下面考虑一个*高斯核*（Gaussian kernel），其定义为：
+
+$$K(u) = \frac{1}{\sqrt{2\pi}} \exp(-\frac{u^2}{2}).$$
+
+将高斯核代入可以得到：
 
 $$\begin{aligned} f(x) &=\sum_{i=1}^n \alpha(x, x_i) y_i\\ &= \sum_{i=1}^n \frac{\exp\left(-\frac{1}{2}(x - x_i)^2\right)}{\sum_{j=1}^n \exp\left(-\frac{1}{2}(x - x_j)^2\right)} y_i \\ &= \sum_{i=1}^n \mathrm{softmax}\left(-\frac{1}{2}(x - x_i)^2\right) y_i. \end{aligned}$$
 
@@ -165,28 +121,39 @@ $$\begin{aligned} f(x) &=\sum_{i=1}^n \alpha(x, x_i) y_i\\ &= \sum_{i=1}^n \frac
 那么分配给这个键对应值 $y_i$ 的注意力权重就会越大，
 也就“获得了更多的注意力”。
 
+值得注意的是，Nadaraya-Watson核回归是一个非参数模型。
+*非参数的注意力汇聚*（nonparametric attention pooling）模型。
+
 ## [**带参数注意力汇聚**]
 
-我们可以将可学习的参数集成到注意力汇聚中。
+非参数的Nadaraya-Watson核回归具有*一致性*（consistency）的优点：
+如果有足够的数据，此模型会收敛到最优结果。
+尽管如此，我们还是可以轻松地将可学习的参数集成到注意力汇聚中。
 
 在下面的查询 $x$ 和键 $x_i$ 之间的距离乘以可学习参数 $w$ ：
 
 $$\begin{aligned}f(x) &= \sum_{i=1}^n \alpha(x, x_i) y_i \\ &= \sum_{i=1}^n \frac{\exp\left(-\frac{1}{2}((x - x_i)w)^2\right)}{\sum_{j=1}^n \exp\left(-\frac{1}{2}((x - x_j)w)^2\right)} y_i \\ &= \sum_{i=1}^n \mathrm{softmax}\left(-\frac{1}{2}((x - x_i)w)^2\right) y_i.\end{aligned}$$
 
+### 批量矩阵乘法
+
+为了更有效地计算小批量数据的注意力，
+我们可以利用深度学习开发框架中提供的批量矩阵乘法。
+
+假设第一个小批量数据包含 $n$ 个矩阵 $\mathbf{X}_1,\ldots, \mathbf{X}_n$ ，
+形状为 $a\times b$ ，
+第二个小批量包含 $n$ 个矩阵 $\mathbf{Y}_1, \ldots, \mathbf{Y}_n$ ，
+形状为 $b\times c$ 。
+它们的批量矩阵乘法得到 $n$ 个矩阵
+ $\mathbf{X}_1\mathbf{Y}_1, \ldots, \mathbf{X}_n\mathbf{Y}_n$，
+形状为 $a\times c$ 。
+因此，[**假定两个张量的形状分别是 $(n,a,b)$ 和 $(n,b,c)$ ，
+它们的批量矩阵乘法输出的形状为 $(n,a,c)$ **]。
+
 # 注意力评分函数
 
-*注意力评分函数*（attention scoring function），
+使用高斯核来对查询和键之间的关系建模。
+上面公式中的高斯核指数部分可以视为*注意力评分函数*（attention scoring function），
 简称*评分函数*（scoring function），
-就像上面的
-$$
-a(x,xi) = \frac{1}{\sqrt{2\pi}} \exp(-\frac{1}{2}((x-xi)w)^2).
-$$
-为了方便理解，我们可以把方程改写为
-$$
-a(q,k) = \frac{1}{\sqrt{2\pi}} \exp(-\frac{1}{2}((q-k)w)^2).
-$$
-其中 $q$ 代表查询, $k$ 代表键。
-
 然后把这个函数的输出结果输入到softmax函数中进行运算。
 通过上述步骤，将得到与键对应的值的概率分布（即注意力权重）。
 最后，注意力汇聚的输出就是基于这些注意力权重的值的加权和。
@@ -230,28 +197,7 @@ $$
 正如上图所示，选择不同的注意力评分函数 $a$ 会导致不同的注意力汇聚操作。
 这里将介绍两个流行的评分函数，稍后将用他们来实现更复杂的注意力机制。
 
-## [**加性注意力**]
-
-一般来说，当查询和键是不同长度的矢量时，可以使用加性注意力作为评分函数。
-给定查询 $\mathbf{q} \in \mathbb{R}^q$ 和
-键 $\mathbf{k} \in \mathbb{R}^k$ ，
-*加性注意力*（additive attention）的评分函数为
-
-$$
-a(\mathbf{q}, \mathbf{k}) = \mathbf{w}_v^\top \text{tanh}(\mathbf{W}_q \mathbf{q} + \mathbf{W}_k \mathbf{k})  \text{where } a(\mathbf{q}, \mathbf{k}) \in \mathbb{R}
-$$
-
-其中可学习的参数是 $\mathbf W_q\in\mathbb R^{h\times q}$ 、
- $\mathbf W_k\in\mathbb R^{h\times k}$ 和
-$\mathbf w_v\in\mathbb R^{h}$ 。
-如公式所示，
-将查询和键连结起来后输入到一个多层感知机（MLP）中，
-感知机包含一个隐藏层，其隐藏单元数是一个超参数 $h$ 。
-通过使用 $\tanh$ 作为激活函数。
-
-### 对注意力分数进行masked_softmax
-
-#### [**掩蔽softmax操作**]
+## [**掩蔽softmax操作**]
 
 正如上面提到的，softmax操作用于输出一个概率分布作为注意力权重。
 在某些情况下，并非所有的值都应该被纳入到注意力汇聚中。
@@ -288,6 +234,70 @@ $\mathbf w_v\in\mathbb R^{h}$ 。
     [[0.54370314, 0.45629686, 0.        , 0.        ],
     [0.19598779, 0.25580424, 0.19916737, 0.34904057]]]
 
+
+## [**加性注意力**]
+
+一般来说，当查询和键是不同长度的矢量时，可以使用加性注意力作为评分函数。
+给定查询 $\mathbf{q} \in \mathbb{R}^q$ 和
+键 $\mathbf{k} \in \mathbb{R}^k$ ，
+*加性注意力*（additive attention）的评分函数为
+
+$$
+a(\mathbf{q}, \mathbf{k}) = \mathbf{w}_v^\top \text{tanh}(\mathbf{W}_q \mathbf{q} + \mathbf{W}_k \mathbf{k})  \text{where } a(\mathbf{q}, \mathbf{k}) \in \mathbb{R}
+$$
+
+
+
+其中可学习的参数是 $\mathbf W_q\in\mathbb R^{h\times q}$ 、
+ $\mathbf W_k\in\mathbb R^{h\times k}$ 和
+$\mathbf w_v\in\mathbb R^{h}$ 。
+如公式所示，
+将查询和键连结起来后输入到一个多层感知机（MLP）中，
+感知机包含一个隐藏层，其隐藏单元数是一个超参数 $h$ 。
+通过使用 $\tanh$ 作为激活函数。
+
+### 参数维度设置
+
+在NLP(Natural Language Processing)中，
+查询数小于等于第 $i$ 个词元序列长度，且大于0，
+而键 $k_i$ 和值 $v_i$ 数量通常就是第 $i$ 个词元序列长度或者就是步数。
+
+假设我们有一个序列 ["I", "love", "deep", "learning"]，
+你可能会只对词 "love" 提出查询。
+此时，查询的长度为 1，而键的长度是 4（因为整个句子有 4 个词）。
+
+在这种情况下，
+查询 "love" 会与整个句子中的所有其他词（"I", "love", "deep", "learning"）进行比较，
+得到它们之间的相似度（注意力分数），
+然后计算加权和。
+
+
+**query**: (batch_size, num_q, feature_q)
+
+**key**: (batch_size, num_k&v, feature_k)
+
+**value**: (batch_size, num_k&v, feature_v)
+(**注意!**查询、键和值各自的特征维度可以保持不同，此外，由于键值对的设置，键的数目和值的数目是一致的)
+
+$W_q$: 一个线性层，输入维度是feature_q，输出维度是num_hidden,作用是将query的特征维度feature_q线性变换为num_hidden。
+
+（此处的num_hidden代表的是query和key加和所使用的维度，由于最终注意力分数为标量，所以num_hidden是一个超参数，就像是被隐藏在这过程中）
+
+剩下的 $W_k$ 与 $w_v$ 同 $W_q$ 有异曲同工之妙。
+
+$W_k$: 一个线性层，输入维度是feature_k，输出维度是num_hidden
+
+$w_v$: 一个线性层，输入维度是num_hidden，输出维度是1 (该层与value并无直接联系，故小写w)
+
+随后可以计算 $a(\mathbf q, \mathbf k) = \mathbf w_v^\top \text{tanh}(\mathbf W_q\mathbf q + \mathbf W_k \mathbf k) \text{, where }a(\mathbf q, \mathbf k)\in \mathbb{R},$ 得到注意力分数，此时注意力分数张量是(batch_size, num_q, num_k&v, 1), 最后一个维度可以去除，即张量为(batch_size, num_q, num_k&v)
+
+### 对注意力分数进行masked_softmax
+
+**valid_lens**可以是一个 $1 \times$ batch_size的向量，
+用于掩蔽掉一些注意力分数。
+
+掩蔽之后对于各个注意力分数做softmax,使它们变成概率。
+
 ### 计算注意力汇聚函数
 
 $$
@@ -295,7 +305,63 @@ f(\mathbf{q}, (\mathbf{k}_1, \mathbf{v}_1), \ldots, (\mathbf{k}_m, \mathbf{v}_m)
 $$
 
 
-对于每一个批次，做value的加权求和。
+对于每一个批次，做value的加权求和，其中可以对某些注意力权重，也就是 $\alpha(\mathbf{q}, \mathbf{k}_i)$ 做暂退法dropout（把一些注意力权重设置成0）。
+
+dropout是一种正则化技术，该技术的主要作用是防止神经网络的过拟合。
+
+为了保证 Dropout **不会改变整体输出的期望**，我们在训练时除以 $p$ 进行缩放： $$\tilde{x} = \frac{x \cdot \mathbf{m}}{p}$$
+其中：
+
+  $\mathbf{m}$ 是一个随机变量，满足：
+  $$\mathbf{m} =  \begin{cases}  1, & \text{概率 }  \\  0, & \text{概率 } 1 - p  \end{cases}$$
+
+这样，我们计算缩放后的期望：
+
+$$\mathbb{E}[\tilde{x}] = \mathbb{E} \left[ \frac{x \cdot \mathbf{m}}{p} \right]
+$$
+
+因为 **期望可以分配到乘法内**，并且 $\mathbb{E}[\mathbf{m}] = p$ ，所以：
+
+$$
+\mathbb{E}[\tilde{x}] = \frac{x}{p} \cdot \mathbb{E}[\mathbf{m}] = \frac{x}{p} \cdot p = x
+$$
+
+这就证明了，即使我们随机丢弃了部分神经元，整体的期望值仍然保持不变**。
+
+### 进行批量矩阵乘法
+
+目前attention_weights张量大小是(batch_size, num_q, num_k&v),
+而values的形状是(batch_size, num_k&v, feature_v)。
+
+批量矩阵乘法(bmm)之后我们得到结果张量的形状是(batch_size, num_q, feature_v)。
+
+### 例
+
+queries: Normal(0, 1, (2, 1, 20)) （(0，1）正态分布的张量)
+query_size or feature_q=20
+
+keys: Ones((2, 10, 2)) (由1填满的张量，代表了keys全部相同)
+key_size or feature_k = 2
+
+values: Arange(40, dtype=torch.float32).reshape(2, 10, 4)
+（values的两个批次都是从0到40的张量
+valid_lens: tensor([2, 6])
+
+在计算过程中的超参数：
+num_hiddens=8, dropout=0.1
+
+计算得出结果是一个 $2 \times 1 \times 4$ 的张量：
+
+    [[[ 2.0000,  3.0000,  4.0000,  5.0000]],
+
+    [[10.0000, 11.0000, 12.0000, 13.0000]]]
+
+queries & keys 热力图：
+
+![图片](../img/output_attention-scoring-functions_addition.svg)
+
+尽管加性注意力包含了可学习的参数，但由于本例子中每个键都是相同的，
+所以[**注意力权重**]是均匀的，由指定的有效长度决定。
 
 ## [**缩放点积注意力**]
 
