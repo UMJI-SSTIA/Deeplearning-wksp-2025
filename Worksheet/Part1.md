@@ -288,4 +288,4 @@ Bertolotti, Jacopo. 梯度下降动画. https://twitter.com/j_bertolotti/status/
 
 Johnson, Justin. UMich EECS-498.
 
-MIT 6.S191. 感知器的构造.
+MIT 6.S191.
