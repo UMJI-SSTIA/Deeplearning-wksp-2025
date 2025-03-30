@@ -172,15 +172,14 @@ $$\begin{aligned}f(x) &= \sum_{i=1}^n \alpha(x, x_i) y_i \\ &= \sum_{i=1}^n \fra
 简称*评分函数*（scoring function），
 就像上面的
 $$
-a(x,xi) = \frac{1}{\sqrt{2\pi}} \exp(-\frac{1}{2}((x-xi)w)^2).
+\alpha(x,xi) = softmax(-\frac{1}{2}((x-xi)w)^2).
 $$
 为了方便理解，我们可以把方程改写为
 $$
-a(q,k) = \frac{1}{\sqrt{2\pi}} \exp(-\frac{1}{2}((q-k)w)^2).
+\alpha(q,k) = softmax(-\frac{1}{2}((q-k)w)^2).
 $$
 其中 $q$ 代表查询, $k$ 代表键。
 
-然后把这个函数的输出结果输入到softmax函数中进行运算。
 通过上述步骤，将得到与键对应的值的概率分布（即注意力权重）。
 最后，注意力汇聚的输出就是基于这些注意力权重的值的加权和。
 
