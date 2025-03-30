@@ -100,15 +100,15 @@ kNN 模型无需训练，但设 $N$ 为训练数据集的大小，$d$ 为每个�
 
 令 $f(x; W)=W\cdot x$.$\text{\ \ }$其中，$x$ 是 $3072$ 维的图片向量，$W$ 是 $10\times3072$ 的参数矩阵.$\text{\ \ }$ $W\cdot x$ 的结果是一个 $10$ 维的向量，其中第 $i$ 维的大小代表 $W$ 对 $x$ 属于第 $i$ 个标签的评分.$\text{\ \ }$我们想让正确标签的评分最高.
 
-<!-- 学过线性代数的同学们知道，我们可以把 $W\cdot x+b$ 简化为一次矩阵乘法：
+<!-- 学过线性代数的同学们知道，我们可以把 $W\cdot x+b$ 简化为一次矩阵乘法： -->
 
-$$
-Wx + b =
-\left[ {\begin{array}{cc} W&b \\ \end{array}}\right]
-\left[ {\begin{array}{cc} x \\ 1 \\ \end{array}}\right].
-$$
+<!-- $$ -->
+<!-- Wx + b = -->
+<!-- \left[ {\begin{array}{cc} W&b \\ \end{array}}\right] -->
+<!-- \left[ {\begin{array}{cc} x \\ 1 \\ \end{array}}\right]. -->
+<!-- $$ -->
 
-因此我们在接下来的讨论中把 $b$ 也当成 $W$ 的一部分，省去单独考虑的麻烦. -->
+<!-- 因此我们在接下来的讨论中把 $b$ 也当成 $W$ 的一部分，省去单独考虑的麻烦. -->
 
 思考一下这里 $W$ 的意义.$\text{\ \ }$ $W$ 的第 $i$ 行向量似乎对应着第 $i$ 个标签，使得对应标签的图片在与它进行乘积以后能获得最大值.$\text{\ \ }$同时，$W$ 每一行的大小都与图片向量相同，我们可以把 $W$ 的每一行想象成一个模板图片.
 
@@ -217,33 +217,33 @@ $$
 
 我们考虑每次计算梯度的时候，都只从庞大的数据集中随机抽取一小份计算 $W$ 在这一小份数据上的损失函数 $L'$ 以趋近 $L$，用更少的计算次数获得近似解，这就是随机梯度下降 (Stochastic Gradient Descent，简称 SGD).
 
-<!-- 然而由于我们并不知道 $L$ 关于 $W$ 有没有什么特别好的性质，这可能导致我们在进行随机梯度下降时遇到一些让算法效率变低的问题. 
+<!-- 然而由于我们并不知道 $L$ 关于 $W$ 有没有什么特别好的性质，这可能导致我们在进行随机梯度下降时遇到一些让算法效率变低的问题.  -->
 
-![](../img/Part1/2_2_3.png)
+<!-- ![](../img/Part1/2_2_3.png) -->
 
-如图所示，当梯度在 $W$ 的两个分量上下降速度不一致时，我们可能希望 $W$ 沿绿色的折线快速下降到局部最优点，但实际上 $W$ 会严格按照负梯度的方向，沿黑色折线缓慢下降，这会严重降低我们训练模型的速度.
+<!-- 如图所示，当梯度在 $W$ 的两个分量上下降速度不一致时，我们可能希望 $W$ 沿绿色的折线快速下降到局部最优点，但实际上 $W$ 会严格按照负梯度的方向，沿黑色折线缓慢下降，这会严重降低我们训练模型的速度. -->
 
-#### 2.2.4 SGD + 动量方法
+<!-- #### 2.2.4 SGD + 动量方法 -->
 
-考虑怎么避免这种折线状的梯度下降路线出现. 2.2.3 的示意图中，一个效率很高的梯度下降路线被夹在了黑色的行进路线之间. 有没有一种方法能让下降路线大体维持在梯度附近，但不会被折线状的梯度变化降低效率呢？
+<!-- 考虑怎么避免这种折线状的梯度下降路线出现. 2.2.3 的示意图中，一个效率很高的梯度下降路线被夹在了黑色的行进路线之间. 有没有一种方法能让下降路线大体维持在梯度附近，但不会被折线状的梯度变化降低效率呢？ -->
 
-在粗糙的平面上有一个小物块，它每秒会获得一个方向不同的加速度，但它的运动轨迹还能维持成平滑的曲线. 新的加速度只会稍微改变物体的动量，并不会直接带着物块沿着加速度的方向直接运动. 运用这个类比，我们改进一下我们的随机梯度下降：
+<!-- 在粗糙的平面上有一个小物块，它每秒会获得一个方向不同的加速度，但它的运动轨迹还能维持成平滑的曲线. 新的加速度只会稍微改变物体的动量，并不会直接带着物块沿着加速度的方向直接运动. 运用这个类比，我们改进一下我们的随机梯度下降： -->
 
-$$
-\begin{aligned}
-&\text{\textbf{procedure} GradientDescent}(rate, cnt, \mu)\\
-&\text{\quad\quad\textbf{initialize }}W\\
-&\text{\quad\quad}v:=0\\
-&\text{\quad\quad\textbf{for} }t=1\textbf{ to } cnt:\\
-&\text{\quad\quad\quad\quad}d:=\nabla_W L(W)\\
-&\text{\quad\quad\quad\quad}v:=\mu\cdot v+d\\
-&\text{\quad\quad\quad\quad}W:=W-v\cdot rate\\
-&\text{\quad\quad\textbf{end}}\\
-&\text{\textbf{return }}W
-\end{aligned}
-$$
+<!-- $$ -->
+<!-- \begin{aligned} -->
+<!-- &\text{\textbf{procedure} GradientDescent}(rate, cnt, \mu)\\ -->
+<!-- &\text{\quad\quad\textbf{initialize }}W\\ -->
+<!-- &\text{\quad\quad}v:=0\\ -->
+<!-- &\text{\quad\quad\textbf{for} }t=1\textbf{ to } cnt:\\ -->
+<!-- &\text{\quad\quad\quad\quad}d:=\nabla_W L(W)\\ -->
+<!-- &\text{\quad\quad\quad\quad}v:=\mu\cdot v+d\\ -->
+<!-- &\text{\quad\quad\quad\quad}W:=W-v\cdot rate\\ -->
+<!-- &\text{\quad\quad\textbf{end}}\\ -->
+<!-- &\text{\textbf{return }}W -->
+<!-- \end{aligned} -->
+<!-- $$ -->
 
-在动量方法中，我们新引入了一个超参数 $\mu$，它的作用与平面上的摩擦因数差不多. 当然，这个方法绝非完美. 感兴趣的听众可以自行研究 RMSProp, Adam, Second-Order Optimization 等更优的算法. -->
+<!-- 在动量方法中，我们新引入了一个超参数 $\mu$，它的作用与平面上的摩擦因数差不多. 当然，这个方法绝非完美. 感兴趣的听众可以自行研究 RMSProp, Adam, Second-Order Optimization 等更优的算法. -->
 
 ## 3. 神经网络 Neural Networks
 
@@ -261,16 +261,16 @@ $$
 
 像 $\max(0,\cdot)$ 这样能够给模型引入非线性因素的函数被称为激活函数. $\max(0, \cdot)$ 由于计算速度快，不会在嵌套多层后引发**梯度消失**等优点而被经常使用，赐名 ReLU (Rectified Linear Unit，线性整流函数).
 
-<!-- 但是由于 ReLU 中存在一个不可导的零点，有时会使用其他函数来替代 ReLU，如 ELU 函数:
+<!-- 但是由于 ReLU 中存在一个不可导的零点，有时会使用其他函数来替代 ReLU，如 ELU 函数: -->
 
-$$ELU(x)=\left\{\begin{align*}
-&x &x\geq0\\
-&\alpha(e^x-1) &x<0\\
-\end{align*}\right.$$
+<!-- $$ELU(x)=\left\{\begin{align*} -->
+<!-- &x &x\geq0\\ -->
+<!-- &\alpha(e^x-1) &x<0\\ -->
+<!-- \end{align*}\right.$$ -->
 
-另外，由于 ReLU 会抹消掉矩阵中所有小于 $0$ 的项，这可能会导致信息的过快损失. 有时我们也会使用 Leaky ReLU 作为激活函数：
+<!-- 另外，由于 ReLU 会抹消掉矩阵中所有小于 $0$ 的项，这可能会导致信息的过快损失. 有时我们也会使用 Leaky ReLU 作为激活函数： -->
 
-$$Leaky\ ReLU(x)=\max(0.1x, x)$$ -->
+<!-- $$Leaky\ ReLU(x)=\max(0.1x, x)$$ -->
 
 ### 3.2 感知器 Perceptron
 
