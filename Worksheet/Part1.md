@@ -1,4 +1,4 @@
-# Deep Learning Workshop 2025 Part A
+# Deep Learning Workshop 2025 Part 1
 
 ## 0. 前言 Foreword
 
@@ -288,4 +288,4 @@ Bertolotti, Jacopo. 梯度下降动画. https://twitter.com/j_bertolotti/status/
 
 Johnson, Justin. UMich EECS-498.
 
-MIT 6.S191.
+MIT 6.S191. 感知器的构造.
