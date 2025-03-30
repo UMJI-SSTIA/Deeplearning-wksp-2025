@@ -1,0 +1,386 @@
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<h1 id="transformer">Transformer</h1>
+<h2 id="背景">背景</h2>
+<h3 id="rnn的局限">RNN的局限</h3>
+<figure>
+<img src="../img/RNN.png" alt="RNN结构" style="width: 1000px; height: auto;" />
+<figcaption aria-hidden="true">RNN结构</figcaption>
+</figure>
+<p>上图是最基础的RNN的结构示意图。RNN（循环神经网络）包含两个重要的概念：时间步，隐藏状态。</p>
+<p>时间步：比如，在文本处理任务中，每个时间步可能是一个单词或字符。</p>
+<p>隐藏状态：它的作用就像是网络的“记忆”，它允许网络通过多个时间步学习数据中的时序关系。</p>
+<p>第 <span class="math inline"><em>t</em></span> 个时间步的输出 <span
+class="math inline"><em>y</em><sub><em>t</em></sub></span>
+既与当前时间步的输入 <span
+class="math inline"><em>x</em><sub><em>t</em></sub></span>
+有关，又与上一时间步的隐藏状态 <span
+class="math inline"><em>h</em><sub><em>t</em> − 1</sub></span>
+有关。</p>
+<p>虽然RNN有很好的预测效果，但是它的计算非常昂贵，因为隐藏状态的设置导致它没有办法并行运算。这样的局限促进了我们今天的主角–<strong>transformer</strong>的产生。</p>
+<h2
+id="transformer-处理-i-arrived-at-the-je-suis-arrivé-的全过程"><strong>Transformer
+处理 “I arrived at the” → “Je suis arrivé” 的全过程</strong></h2>
+<p>Transformer 模型用于神经机器翻译（NMT），其核心流程包括
+<strong>词嵌入（Embeddings）</strong>、<strong>位置编码（Positional
+Encoding）</strong>、<strong>多头自注意力（Multi-head
+Self-Attention）</strong>、<strong>前馈网络（Feed-Forward
+Network）</strong>，以及
+<strong>解码（Decoding）</strong>。下面我们逐步解析 “I arrived at the” →
+“Je suis arrivé” 是如何通过 Transformer 翻译的。</p>
+<hr />
+<h2 id="输入处理"><strong>1. 输入处理</strong></h2>
+<h3 id="tokenization分词"><strong>(1) Tokenization（分词）</strong></h3>
+<p>首先，Transformer
+需要将句子拆分成<strong>子词单元（subwords）</strong>，通常使用
+<strong>Byte Pair Encoding (BPE)</strong> 或
+<strong>WordPiece</strong>。</p>
+<pre class="plaintext"><code>Input: &quot;I arrived at the&quot;
+Tokenized: [&quot;I&quot;, &quot;arrived&quot;, &quot;at&quot;, &quot;the&quot;]</code></pre>
+<hr />
+<h3 id="词嵌入word-embeddings"><strong>(2) 词嵌入（Word
+Embeddings）</strong></h3>
+<p>Transformer 不能直接处理文本，因此每个 token
+需要转换成高维向量表示：</p>
+<pre class="plaintext"><code>Embeddings(I)      → [0.1, 0.5, 0.8, ...]
+Embeddings(arrived) → [0.3, 0.7, 0.2, ...]
+Embeddings(at)      → [0.6, 0.1, 0.9, ...]
+Embeddings(the)     → [0.2, 0.4, 0.7, ...]</code></pre>
+<hr />
+<h3 id="位置编码positional-encoding"><strong>(3) 位置编码（Positional
+Encoding）</strong></h3>
+<p>由于 Transformer 没有循环结构（不像 RNN
+依赖时间步），它通过<strong>正弦 &amp;
+余弦函数</strong>添加位置信息：</p>
+<pre class="plaintext"><code>PositionalEncoding(0) = [0.0000, 0.8415, ...]  # 对应 &quot;I&quot;
+PositionalEncoding(1) = [0.0001, 0.9093, ...]  # 对应 &quot;arrived&quot;
+PositionalEncoding(2) = [0.0002, 0.1411, ...]  # 对应 &quot;at&quot;
+PositionalEncoding(3) = [0.0003, 0.7568, ...]  # 对应 &quot;the&quot;</code></pre>
+<p>然后，将它们加到 Embeddings 上，提供单词的位置信息。</p>
+<hr />
+<h2 id="编码阶段encoder"><strong>2. 编码阶段（Encoder）</strong></h2>
+<p>Transformer
+通过<strong>多个注意力层</strong>处理输入信息，每层主要包括： -
+<strong>多头自注意力（Multi-head Self-Attention）</strong> -
+<strong>前馈神经网络（Feed-Forward Network）</strong> - <strong>残差连接
+&amp; Layer Normalization</strong></p>
+<hr />
+<h3 id="多头自注意力self-attention"><strong>(4)
+多头自注意力（Self-Attention）</strong></h3>
+<p><strong>目标：让每个词关注整个句子的所有词（包括自身），以获取上下文信息。</strong></p>
+<p>比如处理I在这个句子当中的作用，多头意味着每个头有不同的侧重，包括语法结构，语意信息等。</p>
+<hr />
+<h3 id="前馈神经网络feed-forward-network"><strong>(5)
+前馈神经网络（Feed-Forward Network）</strong></h3>
+<p>这是transformer引入非线性因素的关键，在这个子层中设置有激活函数（如relu）。</p>
+<hr />
+<h2 id="解码阶段decoder"><strong>3. 解码阶段（Decoder）</strong></h2>
+<p>Decoder 结构与 Encoder
+类似，但多了一层<strong>交叉注意力（Cross-Attention）</strong>，用于接收
+Encoder 计算出的隐藏状态。这里的隐藏状态只关注了源语言内部的关系。</p>
+<hr />
+<h3 id="自注意力masked-self-attention"><strong>(6) 自注意力（Masked
+Self-Attention）</strong></h3>
+<p>Decoder
+也使用自注意力，因为在翻译的过程中我们需要保持该句子的语法正确。这一要求意味着我们需要考虑目标语言的内部关系。</p>
+<hr />
+<h3 id="交叉注意力cross-attention"><strong>(7)
+交叉注意力（Cross-Attention）</strong></h3>
+<p>Decoder 需要结合 Encoder 的信息来生成翻译： - 让解码器关注源句子
+<code>"I arrived at the"</code>，提取必要的信息： - 识别
+<code>"arrived"</code> 应对应 <code>“arrivé”</code>。 - 识别
+<code>"I"</code> 应对应 <code>"je"</code>。 - 注意性别和语法，使
+<code>"arrivé"</code> 变为正确的 <code>“je suis arrivé”</code>。</p>
+<hr />
+<h2 id="生成翻译"><strong>4. 生成翻译</strong></h2>
+<p>Transformer 最后通过一个 <strong>Softmax 层</strong>
+输出概率最高的法语单词：</p>
+<pre class="plaintext"><code>P(Je | I) = 0.92
+P(suis | arrived) = 0.87
+P(arrivé | at) = 0.95</code></pre>
+<p>最终生成的法语翻译：</p>
+<pre class="plaintext"><code>&quot;Je suis arrivé&quot;</code></pre>
+<hr />
+<p><img src="../img/example.gif" alt="example" width="1000" height="auto" /> # 注意力机制</p>
+<h2 id="查询键和值">查询、键和值</h2>
+<p>首先我将以搜索引擎为例来介绍一下这三个概念。</p>
+<p><strong>查询</strong>：
+查询是用户在搜索引擎中输入的内容，通常是一个关键字或短语，表示用户想要查找的信息。</p>
+<p><strong>键</strong>：
+键通常是指一个文档或网页的标识符（如网页的URL）、关键词。</p>
+<p><strong>值</strong>： 值是与键相关联的数据，是实际的查询结果。</p>
+<figure>
+<img src="../img/qkv.svg"
+alt="注意力机制通过注意力汇聚将查询（自主性提示）和键（非自主性提示）结合在一起，实现对值（感官输入）的选择倾向" width = "1000" height = "auto" />
+<figcaption
+aria-hidden="true">注意力机制通过注意力汇聚将<em>查询</em>（自主性提示）和<em>键</em>（非自主性提示）结合在一起，实现对<em>值</em>（感官输入）的选择倾向</figcaption>
+</figure>
+<p>比如你在搜索引擎中寻找深度学习相关的内容，它首先在一系列键中（不管是否和深度学习有关）寻找，最后通过你的查询和键的相互作用，返回一个相关性比较强的值（通常包括关键词深度学习，比如《动手学深度学习》）。</p>
+<figure>
+<img src="../img/动手学深度学习.png" alt="动手学深度学习" width = "1000" height = "auto"/>
+<figcaption aria-hidden="true">动手学深度学习</figcaption>
+</figure>
+<h1
+id="注意力汇聚查询和键的相互作用">注意力汇聚：查询和键的相互作用</h1>
+<h2 id="平均汇聚">平均汇聚</h2>
+<p>先使用最简单的估计器来解决回归问题。
+基于平均汇聚来计算所有训练样本输出值的平均值：</p>
+<p><span class="math display">$$f(x) = \frac{1}{n}\sum_{i=1}^n
+y_i,$$</span></p>
+<h2 id="非参数注意力汇聚">[<strong>非参数注意力汇聚</strong>]</h2>
+<p><span class="math display">$$f(x) = \sum_{i=1}^n \alpha(x, x_i)
+y_i,$$</span></p>
+<p>其中 <span class="math inline"><em>x</em></span> 是查询， <span
+class="math inline">(<em>x</em><sub><em>i</em></sub>, <em>y</em><sub><em>i</em></sub>)</span>
+是键值对。 比较这两个注意力汇聚公式， 注意力汇聚是 <span
+class="math inline"><em>y</em><sub><em>i</em></sub></span> 的加权平均。
+将查询 <span class="math inline"><em>x</em></span> 和键 <span
+class="math inline"><em>x</em><sub><em>i</em></sub></span>
+之间的关系建模为 <em>注意力权重</em>（attention weight）<span
+class="math inline"><em>α</em>(<em>x</em>, <em>x</em><sub><em>i</em></sub>)</span>
+， 这个权重将被分配给每一个对应值 <span
+class="math inline"><em>y</em><sub><em>i</em></sub></span> 。
+对于任何查询，模型在所有键值对注意力权重都是一个有效的概率分布：
+它们是非负的，并且总和为1。</p>
+<p>为了更好地理解注意力汇聚， 下面考虑一个具体的函数，其定义为：</p>
+<p><span class="math display">$$\begin{aligned} f(x) &amp;=\sum_{i=1}^n
+\alpha(x, x_i) y_i\\ &amp;= \sum_{i=1}^n \frac{\exp\left(-\frac{1}{2}(x
+- x_i)^2\right)}{\sum_{j=1}^n \exp\left(-\frac{1}{2}(x - x_j)^2\right)}
+y_i \\ &amp;= \sum_{i=1}^n \mathrm{softmax}\left(-\frac{1}{2}(x -
+x_i)^2\right) y_i. \end{aligned}$$</span></p>
+<p>在这个公式中， 如果一个键 <span
+class="math inline"><em>x</em><sub><em>i</em></sub></span>
+越是接近给定的查询 <span class="math inline"><em>x</em></span> ，
+那么分配给这个键对应值 <span
+class="math inline"><em>y</em><sub><em>i</em></sub></span>
+的注意力权重就会越大， 也就“获得了更多的注意力”。</p>
+<h2 id="带参数注意力汇聚">[<strong>带参数注意力汇聚</strong>]</h2>
+<p>我们可以将可学习的参数集成到注意力汇聚中。</p>
+<p>在下面的查询 <span class="math inline"><em>x</em></span> 和键 <span
+class="math inline"><em>x</em><sub><em>i</em></sub></span>
+之间的距离乘以可学习参数 <span class="math inline"><em>w</em></span>
+：</p>
+<p><span class="math display">$$\begin{aligned}f(x) &amp;= \sum_{i=1}^n
+\alpha(x, x_i) y_i \\ &amp;= \sum_{i=1}^n
+\frac{\exp\left(-\frac{1}{2}((x - x_i)w)^2\right)}{\sum_{j=1}^n
+\exp\left(-\frac{1}{2}((x - x_j)w)^2\right)} y_i \\ &amp;= \sum_{i=1}^n
+\mathrm{softmax}\left(-\frac{1}{2}((x - x_i)w)^2\right)
+y_i.\end{aligned}$$</span></p>
+<h1 id="注意力评分函数">注意力评分函数</h1>
+<p><em>注意力评分函数</em>（attention scoring function），
+简称<em>评分函数</em>（scoring function）， 就像上面的 <span
+class="math display">$$
+a(x,xi) = \frac{1}{\sqrt{2\pi}} \exp(-\frac{1}{2}((x-xi)w)^2).
+$$</span> 为了方便理解，我们可以把方程改写为 <span
+class="math display">$$
+a(q,k) = \frac{1}{\sqrt{2\pi}} \exp(-\frac{1}{2}((q-k)w)^2).
+$$</span> 其中 <span class="math inline"><em>q</em></span> 代表查询,
+<span class="math inline"><em>k</em></span> 代表键。</p>
+<p>然后把这个函数的输出结果输入到softmax函数中进行运算。
+通过上述步骤，将得到与键对应的值的概率分布（即注意力权重）。
+最后，注意力汇聚的输出就是基于这些注意力权重的值的加权和。</p>
+<p>从宏观来看，上述算法可以用来实现 注意力机制框架。 下图说明了
+如何将注意力汇聚的输出计算成为值的加权和， 其中 <span
+class="math inline"><em>a</em></span> 表示注意力评分函数。
+由于注意力权重是概率分布， 因此加权和其本质上是加权平均值。</p>
+<figure>
+<img src="../img/attention-output.svg"
+alt="计算注意力汇聚的输出为值的加权和" />
+<figcaption
+aria-hidden="true">计算注意力汇聚的输出为值的加权和</figcaption>
+</figure>
+<p>用数学语言描述，假设有一个查询 <span
+class="math inline"><strong>q</strong> ∈ ℝ<sup><em>q</em></sup></span>
+和 <span class="math inline"><em>m</em></span> 个“键－值”对 <span
+class="math inline">(<strong>k</strong><sub>1</sub>, <strong>v</strong><sub>1</sub>), …, (<strong>k</strong><sub><em>m</em></sub>, <strong>v</strong><sub><em>m</em></sub>)</span>，
+其中 <span
+class="math inline"><strong>k</strong><sub><em>i</em></sub> ∈ ℝ<sup><em>k</em></sup></span>
+, <span
+class="math inline"><strong>v</strong><sub><em>i</em></sub> ∈ ℝ<sup><em>v</em></sup></span>
+。 注意力汇聚函数 <span class="math inline"><em>f</em></span>
+就被表示成值的加权和：</p>
+<p><span class="math display">$$
+f(\mathbf{q}, (\mathbf{k}_1, \mathbf{v}_1), \ldots, (\mathbf{k}_m,
+\mathbf{v}_m)) = \sum_{i=1}^m \alpha(\mathbf{q}, \mathbf{k}_i)
+\mathbf{v}_i
+$$</span> <span class="math display">where the output lies in
+ℝ<sup><em>v</em></sup></span></p>
+<p>其中查询 <span class="math inline"><strong>q</strong></span> 和键
+<span class="math inline"><strong>k</strong><sub><em>i</em></sub></span>
+的注意力权重（标量） 是通过注意力评分函数 <span
+class="math inline"><em>a</em></span> 将两个向量映射成标量，
+再经过softmax运算得到的：</p>
+<p><span class="math display">$$
+\alpha(\mathbf{q}, \mathbf{k}_i) = \mathrm{softmax}(a(\mathbf{q},
+\mathbf{k}_i)) = \frac{\exp(a(\mathbf{q}, \mathbf{k}_i))}{\sum_{j=1}^m
+\exp(a(\mathbf{q}, \mathbf{k}_j))}
+$$</span> <span class="math display">where
+<em>α</em>(<strong>q</strong>, <strong>k</strong><sub><em>i</em></sub>) ∈ ℝ</span></p>
+<p>正如上图所示，选择不同的注意力评分函数 <span
+class="math inline"><em>a</em></span> 会导致不同的注意力汇聚操作。
+这里将介绍两个流行的评分函数，稍后将用他们来实现更复杂的注意力机制。</p>
+<h2 id="加性注意力">[<strong>加性注意力</strong>]</h2>
+<p>一般来说，当查询和键是不同长度的矢量时，可以使用加性注意力作为评分函数。
+给定查询 <span
+class="math inline"><strong>q</strong> ∈ ℝ<sup><em>q</em></sup></span>
+和 键 <span
+class="math inline"><strong>k</strong> ∈ ℝ<sup><em>k</em></sup></span>
+， <em>加性注意力</em>（additive attention）的评分函数为</p>
+<p><span
+class="math display"><em>a</em>(<strong>q</strong>, <strong>k</strong>) = <strong>w</strong><sub><em>v</em></sub><sup>⊤</sup>tanh(<strong>W</strong><sub><em>q</em></sub><strong>q</strong> + <strong>W</strong><sub><em>k</em></sub><strong>k</strong>)where
+<em>a</em>(<strong>q</strong>, <strong>k</strong>) ∈ ℝ</span></p>
+<p>其中可学习的参数是 <span
+class="math inline"><strong>W</strong><sub><em>q</em></sub> ∈ ℝ<sup><em>h</em> × <em>q</em></sup></span>
+、 <span
+class="math inline"><strong>W</strong><sub><em>k</em></sub> ∈ ℝ<sup><em>h</em> × <em>k</em></sup></span>
+和 <span
+class="math inline"><strong>w</strong><sub><em>v</em></sub> ∈ ℝ<sup><em>h</em></sup></span>
+。 如公式所示， 将查询和键连结起来后输入到一个多层感知机（MLP）中，
+感知机包含一个隐藏层，其隐藏单元数是一个超参数 <span
+class="math inline"><em>h</em></span> 。 通过使用 <span
+class="math inline">tanh </span> 作为激活函数。</p>
+<h3
+id="对注意力分数进行masked_softmax">对注意力分数进行masked_softmax</h3>
+<h4 id="掩蔽softmax操作">[<strong>掩蔽softmax操作</strong>]</h4>
+<p>正如上面提到的，softmax操作用于输出一个概率分布作为注意力权重。
+在某些情况下，并非所有的值都应该被纳入到注意力汇聚中。
+例如，为了高效处理小批量数据集，
+某些文本序列被填充了没有意义的特殊词元。
+为了仅将有意义的词元作为值来获取注意力汇聚，
+可以指定一个有效序列长度（即词元的个数），
+以便在计算softmax时过滤掉超出指定范围的位置。
+下面的<code>masked_softmax</code>函数
+实现了这样的<em>掩蔽softmax操作</em>（masked softmax operation），
+其中任何超出有效长度的位置都被掩蔽并置为0。</p>
+<p>为了[<strong>演示此函数是如何工作</strong>]的， 考虑由 <span
+class="math inline">2 × 2 × 4</span> 张量表示的样本， 有效长度为 <span
+class="math inline">[2, 3]</span> 可以理解为 <span
+class="math inline">[[2, 2], [3, 3]]</span>
+经过掩蔽softmax操作，超出有效长度的值都被掩蔽为0。</p>
+<p>掩蔽后张量：</p>
+<pre><code>[[[0.488994  , 0.511006  , 0.        , 0.        ],
+[0.43654838, 0.56345165, 0.        , 0.        ]],
+
+[[0.28817102, 0.3519408 , 0.3598882 , 0.        ],
+[0.29034293, 0.25239873, 0.45725834, 0.        ]]]</code></pre>
+<p>同样，也可以使用二维张量，为矩阵样本中的每一行指定有效长度。</p>
+<p>若有效长度为 <span class="math inline">[[1, 3], [2, 4]]</span> ,
+那么掩蔽后张量：</p>
+<pre><code>[[[1.        , 0.        , 0.        , 0.        ],
+[0.35848376, 0.36588794, 0.2756283 , 0.        ]],
+
+[[0.54370314, 0.45629686, 0.        , 0.        ],
+[0.19598779, 0.25580424, 0.19916737, 0.34904057]]]</code></pre>
+<h3 id="计算注意力汇聚函数">计算注意力汇聚函数</h3>
+<p><span class="math display">$$
+f(\mathbf{q}, (\mathbf{k}_1, \mathbf{v}_1), \ldots, (\mathbf{k}_m,
+\mathbf{v}_m)) = \sum_{i=1}^m \alpha(\mathbf{q}, \mathbf{k}_i)
+\mathbf{v}_i \quad \text{where} \quad \mathbf{v}_i \in \mathbb{R}^v
+$$</span></p>
+<p>对于每一个批次，做value的加权求和。</p>
+<h2 id="缩放点积注意力">[<strong>缩放点积注意力</strong>]</h2>
+<p>使用点积可以得到计算效率更高的评分函数，
+但是点积操作要求查询和键具有相同的长度 <span
+class="math inline"><em>d</em></span> 。
+假设查询和键的所有元素都是独立的随机变量， 并且都满足零均值和单位方差，
+那么两个向量的点积的均值为 <span class="math inline">0</span> ，方差为
+<span class="math inline"><em>d</em></span> 。 为确保无论向量长度如何，
+点积的方差在不考虑向量长度的情况下仍然是<span
+class="math inline">1</span>， 我们再将点积除以 <span
+class="math inline">$\sqrt{d}$</span> ，
+则<em>缩放点积注意力</em>（scaled dot-product
+attention）评分函数为：</p>
+<p><span class="math display">$$a(\mathbf q, \mathbf k) =
+\mathbf{q}^\top \mathbf{k}  /\sqrt{d}.$$</span></p>
+<p>在实践中，我们通常从小批量的角度来考虑提高效率， 例如基于 <span
+class="math inline"><em>n</em></span> 个查询和 <span
+class="math inline"><em>m</em></span> 个键－值对计算注意力，
+其中查询和键的长度为 <span class="math inline"><em>d</em></span>
+，值的长度为 <span class="math inline"><em>v</em></span> 。 查询 <span
+class="math inline"><strong>Q</strong> ∈ ℝ<sup><em>n</em> × <em>d</em></sup></span>
+、 键 <span
+class="math inline"><strong>K</strong> ∈ ℝ<sup><em>m</em> × <em>d</em></sup></span>
+和 值 <span
+class="math inline"><strong>V</strong> ∈ ℝ<sup><em>m</em> × <em>v</em></sup></span>
+的缩放点积注意力是：</p>
+<p><span class="math display">$$ \mathrm{softmax}\left(\frac{\mathbf Q
+\mathbf K^\top }{\sqrt{d}}\right) \mathbf V \in \mathbb{R}^{n\times
+v}.$$</span></p>
+<p>与加性注意力演示相同，由于键包含的是相同的元素，
+而这些元素无法通过任何查询进行区分，因此会获得[<strong>均匀的注意力权重</strong>]。</p>
+<h1 id="多头注意力">多头注意力</h1>
+<p>在实践中，当给定相同的查询、键和值的集合时，
+我们希望模型可以基于相同的注意力机制学习到不同的行为，
+然后将不同的行为作为知识组合起来， 捕获序列内各种范围的依赖关系
+（例如，短距离依赖和长距离依赖关系）。</p>
+<figure>
+<img src="../img/ironman.png" alt="ironman" />
+<figcaption aria-hidden="true">ironman</figcaption>
+</figure>
+<p>为此，与其只使用单独一个注意力汇聚， 我们可以用独立学习得到的 <span
+class="math inline"><em>h</em></span> 组不同的 <em>线性投影</em>（linear
+projections）来变换查询、键和值。 然后，这 <span
+class="math inline"><em>h</em></span>
+组变换后的查询、键和值将并行地送到注意力汇聚中。 最后，将这 <span
+class="math inline"><em>h</em></span> 个注意力汇聚的输出拼接在一起，
+并且通过另一个可以学习的线性投影进行变换， 以产生最终输出。
+这种设计被称为<em>多头注意力</em>（multihead attention）。 对于 <span
+class="math inline"><em>h</em></span>
+个注意力汇聚输出，每一个注意力汇聚都被称作一个<em>头</em>（head）。
+下图展示了使用全连接层来实现可学习的线性变换的多头注意力。</p>
+<figure>
+<img src="../img/multi-head-attention.svg"
+alt="多头注意力：多个头连结然后线性变换" />
+<figcaption
+aria-hidden="true">多头注意力：多个头连结然后线性变换</figcaption>
+</figure>
+<h2 id="数学模型">数学模型</h2>
+<p>在实现多头注意力之前，让我们用数学语言将这个模型形式化地描述出来。
+给定查询 <span
+class="math inline"><strong>q</strong> ∈ ℝ<sup><em>d</em><sub><em>q</em></sub></sup></span>
+、 键 <span
+class="math inline"><strong>k</strong> ∈ ℝ<sup><em>d</em><sub><em>k</em></sub></sup></span>
+和 值 <span
+class="math inline"><strong>v</strong> ∈ ℝ<sup><em>d</em><sub><em>v</em></sub></sup></span>，
+每个注意力头<span
+class="math inline"><strong>h</strong><sub><em>i</em></sub></span>（<span
+class="math inline"><em>i</em> = 1, …, <em>h</em></span>）的计算方法为：</p>
+<p><span
+class="math display"><strong>h</strong><sub><em>i</em></sub> = <em>f</em>(<strong>W</strong><sub><em>i</em></sub><sup>(<em>q</em>)</sup><strong>q</strong>, <strong>W</strong><sub><em>i</em></sub><sup>(<em>k</em>)</sup><strong>k</strong>, <strong>W</strong><sub><em>i</em></sub><sup>(<em>v</em>)</sup><strong>v</strong>) ∈ ℝ<sup><em>p</em><sub><em>v</em></sub></sup>,</span></p>
+<p>其中，可学习的参数包括 <span
+class="math inline"><strong>W</strong><sub><em>i</em></sub><sup>(<em>q</em>)</sup> ∈ ℝ<sup><em>p</em><sub><em>q</em></sub> × <em>d</em><sub><em>q</em></sub></sup></span>、
+<span
+class="math inline"><strong>W</strong><sub><em>i</em></sub><sup>(<em>k</em>)</sup> ∈ ℝ<sup><em>p</em><sub><em>k</em></sub> × <em>d</em><sub><em>k</em></sub></sup></span>和
+<span
+class="math inline"><strong>W</strong><sub><em>i</em></sub><sup>(<em>v</em>)</sup> ∈ ℝ<sup><em>p</em><sub><em>v</em></sub> × <em>d</em><sub><em>v</em></sub></sup></span>，
+以及代表注意力汇聚的函数 <span class="math inline"><em>f</em></span> 。
+<span class="math inline"><em>f</em></span>可以是
+加性注意力和缩放点积注意力。 多头注意力的输出需要经过另一个线性转换，
+它对应着 <span class="math inline"><em>h</em></span>
+个头连结后的结果，因此其可学习参数是 <span
+class="math inline"><strong>W</strong><sub><em>o</em></sub> ∈ ℝ<sup><em>p</em><sub><em>o</em></sub> × <em>h</em><em>p</em><sub><em>v</em></sub></sup></span>：</p>
+<p><span class="math display">$$
+\mathbf{W_o} \begin{bmatrix}
+\mathbf{h_1} \\
+\vdots \\
+\mathbf{h_h}
+\end{bmatrix} \in \mathbb{R}^{p_o}
+$$</span></p>
+<p>基于这种设计，每个头都可能会关注输入的不同部分，
+可以表示比简单加权平均值更复杂的函数。</p>
+<h1 id="自注意力">[<strong>自注意力</strong>]</h1>
+<p>给定一个由词元组成的输入序列 <span
+class="math inline"><strong>x</strong><sub>1</sub>, …, <strong>x</strong><sub><em>n</em></sub></span>
+， 其中任意 <span
+class="math inline"><strong>x</strong><sub><em>i</em></sub> ∈ ℝ<sup><em>d</em></sup></span>（<span
+class="math inline">1 ≤ <em>i</em> ≤ <em>n</em></span>） 。
+该序列的自注意力输出为一个长度相同的序列 <span
+class="math inline"><strong>y</strong><sub>1</sub>, …, <strong>y</strong><sub><em>n</em></sub></span>
+，其中：</p>
+<p><span
+class="math display"><strong>y</strong><sub><em>i</em></sub> = <em>f</em>(<strong>x</strong><sub><em>i</em></sub>, (<strong>x</strong><sub>1</sub>, <strong>x</strong><sub>1</sub>), …, (<strong>x</strong><sub><em>n</em></sub>, <strong>x</strong><sub><em>n</em></sub>)) ∈ ℝ<sup><em>d</em></sup></span></p>
+<p>根据注意力汇聚函数 <span class="math inline"><em>f</em></span> 。
+对于一个翻译模型来说， query是目标语言的一个词元，
+而keys和values是相同的，都是源语言的所有单词，
+通过f函数可以计算出与query匹配度最高的翻译。</p>
